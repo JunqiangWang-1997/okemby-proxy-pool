@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>捐赠节点 - OkEmby 加速计划</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo"><a href="index.html">⬅️ 返回监控大屏</a></div>
+        </div>
+    </nav>
+
+    <div class="container main-content">
+        <div class="card form-card">
+            <h2>🤝 感谢您的贡献</h2>
+            <p>您的闲置 Cloudflare Worker 额度将帮助社区获得更流畅的观影体验。</p>
+            
+            <div class="alert-box">
+                <strong>⚠️ 安全必读：</strong> 请勿提供 Global API Key！<br>
+                创建 Token 时，权限请仅勾选：<strong>Account</strong> -> <strong>Workers GraphQL Analytics</strong> -> <strong>Read (读取)</strong>
+            </div>
+
+            <form id="donate-form">
+                <div class="form-group">
+                    <label>您的昵称 (Owner Name)</label>
+                    <input type="text" placeholder="例如：Emby侠" required>
+                </div>
+
+                <div class="form-group">
+                    <label>反代 Worker 地址 (Proxy URL)</label>
+                    <input type="url" placeholder="https://xxx.xxx.workers.dev" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Cloudflare Account ID (账户ID)</label>
+                    <input type="text" placeholder="在 CF 域名概述页右下角可以找到" required>
+                </div>
+
+                <div class="form-group">
+                    <label>API Token (只读权限)</label>
+                    <input type="password" placeholder="粘贴您的 Scoped Token" required>
+                </div>
+
+                <button type="submit" class="btn-submit">提交并加入集群</button>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OkEmby 公益加速计划 - 负载监控</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">🚀 OkEmby 加速监控</div>
+            <a href="donate.html" class="btn-donate">➕ 捐赠节点 (加入共建)</a>
+        </div>
+    </nav>
+
+    <div class="container main-content">
+        <div class="card highlight-card">
+            <h2>🔥 您的专属优选加速链接</h2>
+            <p>请将下方链接填入您的 Emby 客户端，系统将自动分配负载最低的节点。</p>
+            <div class="code-box">
+                <span id="load-balanced-url">https://okemby.your-domain.workers.dev</span>
+                <button onclick="copyUrl()">复制</button>
+            </div>
+            <p class="status-text">🟢 当前系统状态：<span id="system-status">正常运行中</span></p>
+        </div>
+
+        <h3>📊 节点实时状态 (实时轮询中)</h3>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>节点名称</th>
+                        <th>状态</th>
+                        <th>今日消耗 (10w限额)</th>
+                        <th>负载率</th>
+                        <th>优选段</th>
+                    </tr>
+                </thead>
+                <tbody id="node-list">
+                    <tr>
+                        <td>用户_9527 (示例)</td>
+                        <td><span class="badge green">在线</span></td>
+                        <td>12,500 / 100,000</td>
+                        <td>
+                            <div class="progress-bar"><div class="fill" style="width: 12.5%"></div></div>
+                        </td>
+                        <td>Visa (104.18...)</td>
+                    </tr>
+                    <tr>
+                        <td>用户_Test (示例)</td>
+                        <td><span class="badge red">拥堵</span></td>
+                        <td>98,000 / 100,000</td>
+                        <td>
+                            <div class="progress-bar red"><div class="fill" style="width: 98%"></div></div>
+                        </td>
+                        <td>Shopify</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <footer>
+        <p>本项目由 OkEmby 社区共建 | 数据每 10 分钟刷新一次</p>
+    </footer>
+
+    <script>
+        // 简单的复制功能
+        function copyUrl() {
+            const urlText = document.getElementById('load-balanced-url').innerText;
+            navigator.clipboard.writeText(urlText).then(() => {
+                alert('链接已复制！');
+            });
+        }
+    </script>
+</body>
+</html>
