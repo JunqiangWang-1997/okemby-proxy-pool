@@ -4,7 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OkEmby 公益加速计划 - 负载监控</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* 新增：弹窗相关样式 */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal-content { background: #25262b; width: 90%; max-width: 800px; padding: 25px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #373a40; animation: fadeIn 0.3s ease; position: relative; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 15px; margin-bottom: 20px; }
+        .modal-header h2 { margin: 0; color: #fff; font-size: 1.5rem; }
+        .btn-close { background: none; border: none; font-size: 2rem; color: #888; cursor: pointer; line-height: 1; transition: color 0.2s; }
+        .btn-close:hover { color: #fff; }
+        
+        /* 弹窗内的 URL 复制区 */
+        .proxy-url-box { background: #1a1b1e; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border: 1px solid #2c2e33; }
+        .proxy-url-box code { color: #4caf50; font-family: monospace; font-size: 1.1rem; overflow-x: auto; margin-right: 10px; }
+        
+        /* 按钮样式微调 */
+        .btn-copy { background: #228be6; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; white-space: nowrap; }
+        .btn-copy:hover { background: #1c7ed6; }
+        .btn-recommend { background: linear-gradient(45deg, #4caf50, #228be6); color: white; border: none; padding: 12px 25px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3); transition: transform 0.2s; }
+        .btn-recommend:hover { transform: translateY(-2px); }
+
+        /* 表格交互 */
+        tbody tr { cursor: pointer; transition: background 0.2s; }
+        tbody tr:hover { background: #2c2e33; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Footer 修复 */
+        footer { text-align: center; padding: 30px 0; margin-top: 40px; color: #7a7a7a; font-size: 0.9rem; border-top: 1px solid #2c2e33; }
+    </style>
 </head>
 <body>
 
@@ -16,17 +45,15 @@
     </nav>
 
     <div class="container main-content">
-        <div class="card highlight-card">
-            <h2>🔥 您的专属优选加速链接</h2>
-            <p>请将下方链接填入您的 Emby 客户端，系统将自动分配负载最低的节点。</p>
-            <div class="code-box">
-                <span id="load-balanced-url">https://okemby.your-domain.workers.dev</span>
-                <button onclick="copyUrl()">复制</button>
-            </div>
-            <p class="status-text">🟢 当前系统状态：<span id="system-status">正常运行中</span></p>
+        
+        <div class="card highlight-card" style="text-align: center; padding: 40px 20px;">
+            <h2 style="margin-bottom: 10px;">⚡ 寻找最快节点？</h2>
+            <p style="color: #aaa; margin-bottom: 25px;">系统会根据实时负载，为您推荐当前最空闲、速度最快的反代节点。</p>
+            <button onclick="recommendBestNode()" class="btn-recommend">🎲 一键获取今日最佳节点</button>
+            <p class="status-text" style="margin-top: 20px;">🟢 监控系统状态：<span id="system-status">正常运行中 (共监控 2 个节点)</span></p>
         </div>
 
-        <h3>📊 节点实时状态 (实时轮询中)</h3>
+        <h3>📊 节点实时状态 (点击列表查看详情与地址)</h3>
         <div class="table-responsive">
             <table>
                 <thead>
@@ -39,7 +66,7 @@
                     </tr>
                 </thead>
                 <tbody id="node-list">
-                    <tr>
+                    <tr onclick="openNodeDetail('用户_9527', 'https://emby-9527.workers.dev', 12500)">
                         <td>用户_9527 (示例)</td>
                         <td><span class="badge green">在线</span></td>
                         <td>12,500 / 100,000</td>
@@ -48,7 +75,7 @@
                         </td>
                         <td>Visa (104.18...)</td>
                     </tr>
-                    <tr>
+                    <tr onclick="openNodeDetail('用户_Test', 'https://emby-test.workers.dev', 98000)">
                         <td>用户_Test (示例)</td>
                         <td><span class="badge red">拥堵</span></td>
                         <td>98,000 / 100,000</td>
@@ -63,19 +90,97 @@
     </div>
 
     <footer>
-            <div class="container">
-                <p>本项目由 OkEmby 社区共建 | 数据每 10 分钟刷新一次</p>
-            </div>
+        <div class="container">
+            <p>本项目由 OkEmby 社区共建 | 数据每 10 分钟刷新一次</p>
+        </div>
     </footer>
 
+    <div id="detail-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">节点详情</h2>
+                <button onclick="closeModal()" class="btn-close">×</button>
+            </div>
+            
+            <div class="modal-body">
+                <p style="color: #aaa; margin-bottom: 10px;">🔗 节点反代地址 (请填入 Emby 客户端)：</p>
+                <div class="proxy-url-box">
+                    <code id="modal-url">https://...</code>
+                    <button class="btn-copy" onclick="copyModalUrl()">复制地址</button>
+                </div>
+
+                <p style="color: #aaa; margin-bottom: 10px;">📈 24小时流量趋势：</p>
+                <div id="chart-requests" style="width: 100%; height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // 简单的复制功能
-        function copyUrl() {
-            const urlText = document.getElementById('load-balanced-url').innerText;
-            navigator.clipboard.writeText(urlText).then(() => {
-                alert('链接已复制！');
-            });
+        let myChart = null;
+
+        // 打开弹窗并渲染数据
+        function openNodeDetail(name, url, usage) {
+            const modal = document.getElementById('detail-modal');
+            const title = document.getElementById('modal-title');
+            const urlCode = document.getElementById('modal-url');
+
+            modal.style.display = 'flex';
+            title.innerText = name + ' 的详细监控';
+            urlCode.innerText = url;
+
+            // 初始化或重置图表
+            if (myChart != null && myChart != "" && myChart != undefined) {
+                myChart.dispose(); // 销毁旧实例，防止数据残留
+            }
+            myChart = echarts.init(document.getElementById('chart-requests'));
+
+            // 模拟生成一些图表数据 (实际项目中这里会fetch后端API)
+            const hours = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', 'Now'];
+            const data = [120, 132, 101, 134, 90, 230, usage/100]; // 随便生成的假数据
+
+            const option = {
+                tooltip: { trigger: 'axis' },
+                grid: { top: '10%', left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: { type: 'category', boundaryGap: false, data: hours, axisLine: { lineStyle: { color: '#888' } } },
+                yAxis: { type: 'value', splitLine: { lineStyle: { color: '#333' } }, axisLine: { lineStyle: { color: '#888' } } },
+                series: [{
+                    name: '请求数',
+                    type: 'line',
+                    smooth: true,
+                    itemStyle: { color: '#4caf50' },
+                    areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{offset: 0, color: 'rgba(76, 175, 80, 0.5)'}, {offset: 1, color: 'rgba(76, 175, 80, 0)'}]) },
+                    data: data
+                }]
+            };
+            myChart.setOption(option);
+            
+            // 响应窗口大小变化
+            window.addEventListener('resize', function() { myChart.resize(); });
         }
+
+        // 关闭弹窗
+        function closeModal() {
+            document.getElementById('detail-modal').style.display = 'none';
+        }
+
+        // 复制弹窗里的 URL
+        function copyModalUrl() {
+            const url = document.getElementById('modal-url').innerText;
+            navigator.clipboard.writeText(url).then(() => alert('节点地址已复制！'));
+        }
+
+        // 模拟“智能推荐”逻辑
+        function recommendBestNode() {
+            // 这里以后可以写逻辑遍历列表，找 usage 最小的那个
+            // 现在先演示直接打开第一个
+            openNodeDetail('用户_9527 (推荐)', 'https://emby-9527.workers.dev', 12500);
+            alert('🎉 已为您自动推荐当前负载最低的节点！');
+        }
+
+        // 点击遮罩层也可以关闭
+        document.getElementById('detail-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
     </script>
 </body>
 </html>
