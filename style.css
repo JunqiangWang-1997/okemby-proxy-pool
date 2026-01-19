@@ -89,3 +89,17 @@ th { color: #888; font-size: 0.9rem; }
     border-radius: 4px;
     box-sizing: border-box; /* 关键修复 */
 }
+
+/* --- Footer 页脚样式修复 --- */
+footer {
+    text-align: center;       /* 文字居中 */
+    padding: 30px 0;          /* 上下留出30px的呼吸空间 */
+    margin-top: 40px;         /* 距离上面的表格拉开距离 */
+    color: #7a7a7a;           /* 文字颜色调暗一点，显得不抢眼 */
+    font-size: 0.9rem;        /* 字体稍微缩小 */
+    border-top: 1px solid #2c2e33; /* (可选) 加一条顶部分割线，更有层次感 */
+}
+
+footer p {
+    margin: 0;                /* 去掉 p 标签默认的外边距 */
+}
